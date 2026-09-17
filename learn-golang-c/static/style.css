@@ -1,0 +1,9 @@
+body { font-family: sans-serif; max-width: 720px; margin: 2rem auto; color: #222; }
+nav a { margin-right: 1rem; }
+.flash { background: #dff5df; border: 1px solid #6c6; padding: 0.5rem 1rem; margin: 1rem 0; }
+.note-card, .habit-row { border: 1px solid #ddd; border-radius: 6px; padding: 0.75rem 1rem; margin: 0.75rem 0; }
+.badge { display: inline-block; background: #eee; border-radius: 4px; padding: 0.1rem 0.5rem; font-size: 0.85em; }
+.muted { color: #777; }
+.actions { margin-top: 1rem; }
+form.inline { display: inline; }
+pre { background: #f6f6f6; padding: 1rem; border-radius: 6px; }

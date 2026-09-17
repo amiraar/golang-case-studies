@@ -1,0 +1,22 @@
+{{define "content"}}
+<h1>Dashboard</h1>
+
+<section>
+    <h2>Habits hari ini</h2>
+    {{if not .Habits}}
+        <p class="muted">Belum ada habit. <a href="/habits/new">Tambah habit</a>.</p>
+    {{else}}
+        {{range .Habits}}{{template "habit_row" .}}{{end}}
+    {{end}}
+    <script src="/static/habits.js"></script>
+</section>
+
+<section>
+    <h2>Note terbaru</h2>
+    {{if not .RecentNote}}
+        <p class="muted">Belum ada note. <a href="/notes/new">Tulis note</a>.</p>
+    {{else}}
+        {{range .RecentNote}}{{template "note_card" .}}{{end}}
+    {{end}}
+</section>
+{{end}}

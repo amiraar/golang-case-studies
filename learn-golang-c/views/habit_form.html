@@ -1,0 +1,8 @@
+{{define "content"}}
+<h1>Habit baru</h1>
+<form method="POST" action="/habits">
+    <label>Nama<br><input type="text" name="name" required></label><br>
+    <label>Deskripsi (opsional)<br><textarea name="description" rows="3"></textarea></label><br>
+    <button type="submit">Simpan</button>
+</form>
+{{end}}

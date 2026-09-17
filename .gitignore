@@ -3,3 +3,7 @@
 *.test
 *.out
 /tmp/
+
+# learn-golang-c: lampiran note (B.13) yang diunggah saat runtime, bukan
+# bagian dari source - folder dibuat otomatis oleh main.go (os.MkdirAll).
+/learn-golang-c/uploads/

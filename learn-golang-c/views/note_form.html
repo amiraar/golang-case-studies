@@ -1,0 +1,12 @@
+{{define "content"}}
+<h1>Note baru</h1>
+{{/* enctype multipart/form-data wajib supaya file (B.13) ikut terkirim,
+     bukan cuma field teks biasa. Butuh Basic Auth (B.18) - browser akan
+     memunculkan dialog login bawaan saat submit kalau belum pernah auth. */}}
+<form method="POST" action="/notes" enctype="multipart/form-data">
+    <label>Judul<br><input type="text" name="title" required></label><br>
+    <label>Isi<br><textarea name="body" rows="6"></textarea></label><br>
+    <label>Lampiran (opsional)<br><input type="file" name="attachment"></label><br>
+    <button type="submit">Simpan</button>
+</form>
+{{end}}

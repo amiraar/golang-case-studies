@@ -1,0 +1,8 @@
+{{/* B.28-B.30: halaman ini sengaja lambat dirender (lihat stats.go) -
+     kalau kelamaan, http.TimeoutHandler di main.go memotongnya dengan 503
+     sebelum file ini sempat dirender sama sekali. */}}
+{{define "content"}}
+<h1>Habit Stats</h1>
+<p class="muted">Login sebagai: {{.Username}}</p>
+<pre>{{.Summary}}</pre>
+{{end}}

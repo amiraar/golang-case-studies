@@ -1,0 +1,12 @@
+{{/* B.5 Render Partial HTML: fragmen "kartu note", dipakai berulang lewat
+     {{range}} di notes_list.html DAN dashboard.html - satu definisi, dua
+     pemakai, supaya tampilan note konsisten di kedua halaman. */}}
+{{define "note_card"}}
+<article class="note-card">
+    <h3><a href="/notes/{{.ID}}">{{.Title}}</a></h3>
+    {{/* B.7 fungsi bawaan (len) + B.8 custom function (truncate) dipakai bareng */}}
+    <p>{{truncate .Body 120}}</p>
+    {{if .Attachments}}<span class="badge">📎 {{len .Attachments}}</span>{{end}}
+    <time>{{formatDate .CreatedAt}}</time>
+</article>
+{{end}}

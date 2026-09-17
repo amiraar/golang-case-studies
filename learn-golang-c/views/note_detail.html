@@ -1,0 +1,26 @@
+{{define "content"}}
+<article>
+    <h1>{{.Title}}</h1>
+    <time>Dibuat {{formatDate .CreatedAt}}, diubah {{formatDate .UpdatedAt}}</time>
+    <p>{{.Body}}</p>
+    {{if .Attachments}}
+    <ul class="attachments">
+        {{range .Attachments}}<li>📎 <a href="/uploads/{{.}}">{{.}}</a></li>{{end}}
+    </ul>
+    {{end}}
+
+    <div class="actions">
+        <a href="/notes/{{.ID}}/download">Download .txt</a>
+        <form method="POST" action="/notes/{{.ID}}/delete" class="inline">
+            <button type="submit" onclick="return confirm('Hapus note ini?')">Hapus</button>
+        </form>
+    </div>
+
+    <form id="attachments-form" data-note-id="{{.ID}}">
+        <label>Tambah lampiran (boleh lebih dari satu)<br>
+            <input type="file" name="files" multiple></label><br>
+        <button type="submit">Unggah</button>
+    </form>
+</article>
+<script src="/static/notes.js"></script>
+{{end}}

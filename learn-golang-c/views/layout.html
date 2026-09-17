@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Habit/Note Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Dashboard</a>
+        <a href="/notes">Notes</a>
+        <a href="/habits">Habits</a>
+        <a href="/habits/stats">Stats</a>
+    </nav>
+    {{if .Flash}}<div class="flash">{{.Flash}}</div>{{end}}
+    <main>
+        {{template "content" .Body}}
+    </main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{{define "habit_row"}}
+<div class="habit-row" data-habit-id="{{.ID}}">
+    <label>
+        <input type="checkbox" class="habit-checkin" data-id="{{.ID}}" {{if .CheckedInToday}}checked{{end}}>
+        <strong>{{.Name}}</strong>
+    </label>
+    {{if .Description}}<p class="muted">{{.Description}}</p>{{end}}
+    <span class="badge">streak: {{.Streak}} hari</span>
+    <form method="POST" action="/habits/{{.ID}}/delete" class="inline">
+        <button type="submit" onclick="return confirm('Hapus habit ini?')">Hapus</button>
+    </form>
+</div>
+{{end}}

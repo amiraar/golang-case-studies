@@ -1,0 +1,11 @@
+{{define "content"}}
+<h1>Habits</h1>
+<p><a href="/habits/new">+ Habit baru</a> · <a href="/habits/stats">Lihat stats</a></p>
+
+{{if not .Habits}}
+    <p class="muted">Belum ada habit.</p>
+{{else}}
+    {{range .Habits}}{{template "habit_row" .}}{{end}}
+{{end}}
+<script src="/static/habits.js"></script>
+{{end}}
