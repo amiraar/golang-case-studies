@@ -1,0 +1,6 @@
+# one URL per line, optional "label,url" format
+# copy this file to urls.txt (or pass -file) and edit as needed
+golang,https://go.dev
+novalagung,https://dasarpemrogramangolang.novalagung.com
+httpbin-delay-1s,https://httpbin.org/delay/1
+not-a-real-host,https://this-domain-should-not-exist.example.invalid
