@@ -1,0 +1,15 @@
+{
+    "app_name": "notetracker-api",
+    "server": {
+        "port": 8081,
+        "read_timeout_seconds": 10,
+        "write_timeout_seconds": 10
+    },
+    "jwt": {
+        "expiry_minutes": 60
+    },
+    "auth": {
+        "username": "admin",
+        "password": "admin123"
+    }
+}

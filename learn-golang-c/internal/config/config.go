@@ -24,6 +24,9 @@ type Config struct {
 		Dir      string `json:"dir"`
 		MaxBytes int64  `json:"max_bytes"`
 	} `json:"upload"`
+	Database struct {
+		Path string `json:"path"` // A.56: lokasi file SQLite untuk NoteStore
+	} `json:"database"`
 	ViewsDir  string `json:"views_dir"`
 	StaticDir string `json:"static_dir"`
 }

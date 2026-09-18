@@ -7,3 +7,7 @@
 # learn-golang-c: lampiran note (B.13) yang diunggah saat runtime, bukan
 # bagian dari source - folder dibuat otomatis oleh main.go (os.MkdirAll).
 /learn-golang-c/uploads/
+
+# learn-golang-c: file database SQLite (A.56) - dibuat otomatis saat
+# runtime oleh store.OpenDB, bukan bagian dari source.
+/learn-golang-c/*.db

@@ -57,7 +57,11 @@ func (h *HabitsHandler) Dashboard(notesStore *store.NoteStore) http.HandlerFunc 
 			NotFoundHandler(h.render)(w, r)
 			return
 		}
-		notes := notesStore.List()
+		notes, err := notesStore.List()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		if len(notes) > 5 {
 			notes = notes[:5]
 		}

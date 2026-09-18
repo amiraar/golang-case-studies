@@ -20,6 +20,25 @@ func testRenderer() *Renderer {
 	return NewRenderer("../../views")
 }
 
+// newTestNoteStore: NoteStore (A.56, SQLite) di atas DB in-memory - test
+// handler di package ini tidak butuh state lintas-test, jadi tiap test
+// cukup dapat DB baru yang otomatis lenyap begitu proses selesai.
+func newTestNoteStore(t *testing.T) *store.NoteStore {
+	t.Helper()
+	db, err := store.OpenDB(":memory:")
+	if err != nil {
+		t.Fatalf("OpenDB: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	s, err := store.NewNoteStore(db)
+	if err != nil {
+		t.Fatalf("NewNoteStore: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+	return s
+}
+
 func multipartNoteBody(t *testing.T, title, body string) (*bytes.Buffer, string) {
 	t.Helper()
 	buf := &bytes.Buffer{}
@@ -33,8 +52,10 @@ func multipartNoteBody(t *testing.T, title, body string) (*bytes.Buffer, string)
 }
 
 func TestNotesHandler_ListRenders(t *testing.T) {
-	s := store.NewNoteStore()
-	s.Create("Judul A", "isi A", nil)
+	s := newTestNoteStore(t)
+	if _, err := s.Create("Judul A", "isi A", nil); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	req := httptest.NewRequest(http.MethodGet, "/notes", nil)
@@ -50,7 +71,7 @@ func TestNotesHandler_ListRenders(t *testing.T) {
 }
 
 func TestNotesHandler_Create_RedirectsAndSetsFlash(t *testing.T) {
-	s := store.NewNoteStore()
+	s := newTestNoteStore(t)
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	body, contentType := multipartNoteBody(t, "Note Baru", "isinya")
@@ -65,8 +86,12 @@ func TestNotesHandler_Create_RedirectsAndSetsFlash(t *testing.T) {
 	if got := w.Header().Get("Location"); got != "/notes" {
 		t.Errorf("Location = %q, want /notes", got)
 	}
-	if len(s.List()) != 1 {
-		t.Fatalf("got %d notes in store, want 1", len(s.List()))
+	notes, err := s.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("got %d notes in store, want 1", len(notes))
 	}
 
 	cookies := w.Result().Cookies()
@@ -82,7 +107,7 @@ func TestNotesHandler_Create_RedirectsAndSetsFlash(t *testing.T) {
 }
 
 func TestNotesHandler_Create_MissingTitleRejected(t *testing.T) {
-	s := store.NewNoteStore()
+	s := newTestNoteStore(t)
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	body, contentType := multipartNoteBody(t, "", "isinya")
@@ -94,13 +119,17 @@ func TestNotesHandler_Create_MissingTitleRejected(t *testing.T) {
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want 400", w.Code)
 	}
-	if len(s.List()) != 0 {
+	notes, err := s.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(notes) != 0 {
 		t.Error("expected no note to be created when title is missing")
 	}
 }
 
 func TestNotesHandler_Detail_NotFound(t *testing.T) {
-	s := store.NewNoteStore()
+	s := newTestNoteStore(t)
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	req := httptest.NewRequest(http.MethodGet, "/notes/99", nil)
@@ -114,8 +143,11 @@ func TestNotesHandler_Detail_NotFound(t *testing.T) {
 }
 
 func TestNotesHandler_Download(t *testing.T) {
-	s := store.NewNoteStore()
-	n := s.Create("Judul Unduh", "isi untuk diunduh", nil)
+	s := newTestNoteStore(t)
+	n, err := s.Create("Judul Unduh", "isi untuk diunduh", nil)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	req := httptest.NewRequest(http.MethodGet, "/notes/1/download", nil)
@@ -161,8 +193,11 @@ func multiFileBody(t *testing.T, files map[string]string) (*bytes.Buffer, string
 }
 
 func TestNotesHandler_UploadAttachments(t *testing.T) {
-	s := store.NewNoteStore()
-	n := s.Create("Judul", "isi", nil)
+	s := newTestNoteStore(t)
+	n, err := s.Create("Judul", "isi", nil)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
 	uploadDir := t.TempDir()
 	h := NewNotesHandler(s, testRenderer(), uploadDir, 1<<20)
 
@@ -196,8 +231,11 @@ func TestNotesHandler_UploadAttachments(t *testing.T) {
 // diam-diam) - dua file bernama sama di satu request tetap tersimpan
 // sebagai dua file terpisah di disk.
 func TestNotesHandler_UploadAttachments_DuplicateFilenames(t *testing.T) {
-	s := store.NewNoteStore()
-	n := s.Create("Judul", "isi", nil)
+	s := newTestNoteStore(t)
+	n, err := s.Create("Judul", "isi", nil)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
 	uploadDir := t.TempDir()
 	h := NewNotesHandler(s, testRenderer(), uploadDir, 1<<20)
 
@@ -241,7 +279,7 @@ func TestNotesHandler_UploadAttachments_DuplicateFilenames(t *testing.T) {
 }
 
 func TestNotesHandler_UploadAttachments_NoteNotFound(t *testing.T) {
-	s := store.NewNoteStore()
+	s := newTestNoteStore(t)
 	h := NewNotesHandler(s, testRenderer(), t.TempDir(), 1<<20)
 
 	body, contentType := multiFileBody(t, map[string]string{"a.txt": "isi"})

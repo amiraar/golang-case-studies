@@ -29,7 +29,12 @@ func NewNotesHandler(s *store.NoteStore, rd *Renderer, uploadDir string, maxUplo
 // List (B.4/B.9 render): GET /notes. Flash (B.21) dibaca di sini karena
 // ini tujuan redirect Create/Delete di bawah.
 func (h *NotesHandler) List(w http.ResponseWriter, r *http.Request) {
-	data := struct{ Notes []store.Note }{Notes: h.store.List()}
+	notes, err := h.store.List()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data := struct{ Notes []store.Note }{Notes: notes}
 	h.render.Page(w, r, "notes_list.html", data, "note_card.html")
 }
 
@@ -87,7 +92,11 @@ func (h *NotesHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	n := h.store.Create(title, body, attachments)
+	n, err := h.store.Create(title, body, attachments)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	SetFlash(w, fmt.Sprintf("Note %q berhasil dibuat", n.Title))
 	// B.25: 303 See Other, bukan 301/302 - browser WAJIB ganti method jadi
 	// GET saat redirect, mencegah resubmit form kalau user refresh halaman
@@ -102,9 +111,13 @@ func (h *NotesHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	n, ok := h.store.Get(id)
-	if !ok {
-		http.NotFound(w, r)
+	n, err := h.store.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	h.render.Page(w, r, "note_detail.html", n)
@@ -119,7 +132,12 @@ func (h *NotesHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if h.store.Delete(id) {
+	ok, err := h.store.Delete(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if ok {
 		SetFlash(w, "Note dihapus")
 	}
 	http.Redirect(w, r, "/notes", http.StatusSeeOther)
@@ -135,9 +153,13 @@ func (h *NotesHandler) Download(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	n, ok := h.store.Get(id)
-	if !ok {
-		http.NotFound(w, r)
+	n, err := h.store.Get(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -164,8 +186,12 @@ func (h *NotesHandler) UploadAttachments(w http.ResponseWriter, r *http.Request)
 		http.NotFound(w, r)
 		return
 	}
-	if _, ok := h.store.Get(id); !ok {
-		http.NotFound(w, r)
+	if _, err := h.store.Get(id); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -224,7 +250,10 @@ func (h *NotesHandler) UploadAttachments(w http.ResponseWriter, r *http.Request)
 		saved = append(saved, saveName)
 	}
 
-	h.store.AddAttachments(id, saved)
+	if _, err := h.store.AddAttachments(id, saved); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	SetFlash(w, fmt.Sprintf("%d lampiran berhasil diunggah", len(saved)))
 	http.Redirect(w, r, fmt.Sprintf("/notes/%d", id), http.StatusSeeOther)
 }

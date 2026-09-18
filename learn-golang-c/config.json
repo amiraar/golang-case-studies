@@ -12,6 +12,9 @@
         "dir": "uploads",
         "max_bytes": 2097152
     },
+    "database": {
+        "path": "notetracker.db"
+    },
     "views_dir": "views",
     "static_dir": "static"
 }

@@ -33,7 +33,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	noteStore := store.NewNoteStore()
+	db, err := store.OpenDB(cfg.Database.Path) // A.56: NoteStore satu-satunya entity yang dipindah ke SQL
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	noteStore, err := store.NewNoteStore(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer noteStore.Close()
+
 	habitStore := store.NewHabitStore()
 	renderer := web.NewRenderer(cfg.ViewsDir)
 

@@ -2,46 +2,87 @@ package store
 
 import "testing"
 
-func TestNoteStore_CreateAndList(t *testing.T) {
-	s := NewNoteStore()
-	s.Create("A", "body a", nil)
-	s.Create("B", "body b", []string{"file.png"})
+// newTestNoteStore: DB SQLite in-memory (":memory:") - schema dibuat sama
+// seperti OpenDB, tapi tidak menyentuh disk sama sekali. Tiap test dapat
+// koneksi/DB terpisah, jadi tidak perlu dibersihkan manual.
+func newTestNoteStore(t *testing.T) *NoteStore {
+	t.Helper()
+	db, err := OpenDB(":memory:")
+	if err != nil {
+		t.Fatalf("OpenDB: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
 
-	notes := s.List()
+	s, err := NewNoteStore(db)
+	if err != nil {
+		t.Fatalf("NewNoteStore: %v", err)
+	}
+	t.Cleanup(func() { s.Close() })
+	return s
+}
+
+func TestNoteStore_CreateAndList(t *testing.T) {
+	s := newTestNoteStore(t)
+	if _, err := s.Create("A", "body a", nil); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if _, err := s.Create("B", "body b", []string{"file.png"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	notes, err := s.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
 	if len(notes) != 2 {
 		t.Fatalf("got %d notes, want 2", len(notes))
 	}
-	// List() urut CreatedAt desc - "B" dibuat belakangan, harus di atas.
+	// List() urut CreatedAt desc (tie-break ID desc) - "B" dibuat belakangan,
+	// harus di atas.
 	if notes[0].Title != "B" {
 		t.Errorf("notes[0].Title = %q, want %q", notes[0].Title, "B")
 	}
 }
 
 func TestNoteStore_GetDelete(t *testing.T) {
-	s := NewNoteStore()
-	n := s.Create("A", "body", nil)
-
-	if _, ok := s.Get(n.ID); !ok {
-		t.Fatal("expected note to exist")
+	s := newTestNoteStore(t)
+	n, err := s.Create("A", "body", nil)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
 	}
-	if !s.Delete(n.ID) {
+
+	if _, err := s.Get(n.ID); err != nil {
+		t.Fatalf("expected note to exist: %v", err)
+	}
+	ok, err := s.Delete(n.ID)
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if !ok {
 		t.Fatal("expected Delete to succeed")
 	}
-	if _, ok := s.Get(n.ID); ok {
+	if _, err := s.Get(n.ID); err == nil {
 		t.Error("expected note to be gone after Delete")
 	}
-	if s.Delete(n.ID) {
+	ok, err = s.Delete(n.ID)
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if ok {
 		t.Error("expected second Delete of same id to return false")
 	}
 }
 
 func TestNoteStore_AddAttachments(t *testing.T) {
-	s := NewNoteStore()
-	n := s.Create("A", "body", []string{"first.png"})
+	s := newTestNoteStore(t)
+	n, err := s.Create("A", "body", []string{"first.png"})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
 
-	updated, ok := s.AddAttachments(n.ID, []string{"second.png", "third.png"})
-	if !ok {
-		t.Fatal("expected AddAttachments to succeed on existing note")
+	updated, err := s.AddAttachments(n.ID, []string{"second.png", "third.png"})
+	if err != nil {
+		t.Fatalf("expected AddAttachments to succeed on existing note: %v", err)
 	}
 	want := []string{"first.png", "second.png", "third.png"}
 	if len(updated.Attachments) != len(want) {
@@ -53,7 +94,7 @@ func TestNoteStore_AddAttachments(t *testing.T) {
 		}
 	}
 
-	if _, ok := s.AddAttachments(9999, []string{"x.png"}); ok {
-		t.Error("expected AddAttachments on unknown id to return false")
+	if _, err := s.AddAttachments(9999, []string{"x.png"}); err == nil {
+		t.Error("expected AddAttachments on unknown id to return an error")
 	}
 }
